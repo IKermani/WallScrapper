@@ -490,14 +490,18 @@ async def main():
     asession = AsyncHTMLSession()
     asession.cookies.update(COOKIES)
 
-    # do the actial process
+    start = time.monotonic()
+    # do the actual process
     await get_ads_list(qs, asession)
     await get_ads_detail(qs, asession)
+    end = time.monotonic()
 
+    print_(f'\n\n{end - start} seconds elapsed.')
 
 asyncio.run(main(), debug=False)
 
 
+print_('saving dataframe to file.')
 # save values to dataframe
 df = pd.DataFrame(list_of_dicts)
 
