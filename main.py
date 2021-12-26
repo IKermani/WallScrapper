@@ -15,9 +15,9 @@ from tqdm import tqdm
 from requests_html import AsyncHTMLSession
 
 # The number of workers to scrap the API asynchronously
-WORKERS = 32
+WORKERS = 3
 # The Threshold for number of pages to scrap
-THRESHOLD = 10000000
+THRESHOLD = 20
 # Total number of pages of the API
 TOTAL_PAGES = None
 
@@ -352,6 +352,8 @@ async def get_ads_detail(queues, asession):
         data['coordinates'] = f'{res["widgets"]["location"]["latitude"]},{res["widgets"]["location"]["longitude"]}' if \
             res["widgets"]["location"] else None
 
+        data['images'] = str(res['widgets']['images'])
+
         data['description'] = res['data']['description']
 
         list_of_dicts.append(data)
@@ -496,7 +498,7 @@ async def main():
     await get_ads_detail(qs, asession)
     end = time.monotonic()
 
-    print_(f'\n\n{end - start} seconds elapsed.')
+    print_(f'{round(end - start, 2)} seconds elapsed.')
 
 asyncio.run(main(), debug=False)
 
