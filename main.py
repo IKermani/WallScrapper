@@ -15,9 +15,9 @@ from tqdm import tqdm
 from requests_html import AsyncHTMLSession
 
 # The number of workers to scrap the API asynchronously
-WORKERS = 3
+WORKERS = 16
 # The Threshold for number of pages to scrap
-THRESHOLD = 20
+THRESHOLD = 10000000
 # Total number of pages of the API
 TOTAL_PAGES = None
 
@@ -35,12 +35,12 @@ AD_CONTACT_DETAIL_URL = 'https://api.divar.ir/v5/posts/{}/contact'
 COOKIES = {
     'did': '8a0c7c3e-9fed-4ece-8bb9-9e50b3418d0c',
     '_gcl_au': '1.1.606995357.1640380110',
-    'token': 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VyIjoiMDkxOTQ2OTg2NzYiLCJpc3MiOiJhdXRoIiwiaWF0IjoxNjQwMzgwMTU1LCJleHAiOjE2NDE2NzYxNTUsInZlcmlmaWVkX3RpbWUiOjE2NDAzODAxNTUsInVzZXItdHlwZSI6InBlcnNvbmFsIiwidXNlci10eXBlLWZhIjoiXHUwNjdlXHUwNjQ2XHUwNjQ0IFx1MDYzNFx1MDYyZVx1MDYzNVx1MDZjYyJ9.p8Pz6IYb2R--WEQM1ldYRcdI1dVnAg5-g2qnHDfSkw0',
+    'token': 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VyIjoiMDkxOTQ2OTk4MTAiLCJpc3MiOiJhdXRoIiwiaWF0IjoxNjQwNjU0NDU1LCJleHAiOjE2NDE5NTA0NTUsInZlcmlmaWVkX3RpbWUiOjE2NDA2NTQ0NTUsInVzZXItdHlwZSI6InBlcnNvbmFsIiwidXNlci10eXBlLWZhIjoiXHUwNjdlXHUwNjQ2XHUwNjQ0IFx1MDYzNFx1MDYyZVx1MDYzNVx1MDZjYyIsInNpZCI6ImY0YWUxYjdjLTBhZjUtNDllMy1iMmNiLTQ5MGQ0ZmU0N2RjYyJ9.ZDcbI2C4aUU806vi8NJEzGjyN4D44pUlFpSG-MUMt2g',
 }
 
 # All columns of the DataSet
 COLUMNS = [
-    'ad_id', 'ad_title', 'ad_timestamp', 'contact_number', 'ad_owner_id', 'ad_owner_name',
+    'ad_id', 'ad_title', 'contact_number', 'ad_owner_id', 'ad_owner_name',
     'ad_owner_type', 'ad_owner_phonenumber', 'ad_owner_address', 'price', 'square_footage',
     'construction_year', 'number_of_rooms', 'price', 'price_per_square_footage', 'floor',
     'floor', 'elevator', 'parking', 'storage', 'number_of_units_per_floor', 'writ',
@@ -211,7 +211,8 @@ async def get_ads_detail(queues, asession):
             print_('\n!!!ERROR HTTP429: too many requests!!!\nTry lowering WORKERS number!!!')
             exit(1)
         data['ad_title'] = res['data']['share']['title']
-        data['ad_timestamp'] = text2timestamp(res['widgets']['header']['date'])
+        data['ad_publish_datetime'] = text2timestamp(res['widgets']['header']['date'])
+        data['ad_scrap_timestamp'] = jdatetime.datetime.now().strftime(DATETIME_FORMAT)
 
         ad_owner_type = res['data']['business_data']['business_type']
         data['ad_owner_type'] = ad_owner_type
