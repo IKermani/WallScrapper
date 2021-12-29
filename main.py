@@ -248,7 +248,7 @@ async def get_ads_detail(queues, asession):
         data['ad_title'] = res['data']['share']['title']
         data['ad_publish_datetime'] = text2timestamp(res['widgets']['header']['date'])
         data['ad_scrap_timestamp'] = jdatetime.datetime.now().strftime(DATETIME_FORMAT)
-        data['neighborhood'] = NEIGHBORHOOD
+        data['district'] = res['data']['district']
 
         ad_owner_type = res['data']['business_data']['business_type']
         data['ad_owner_type'] = ad_owner_type
