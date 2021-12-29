@@ -100,6 +100,7 @@ def load_config(config_filename='config.xlsx'):
             # no filter is used
             ENTRYPOINT_URL += '?page='
         AD_LIST_URL = ENTRYPOINT_URL
+        NEIGHBORHOOD = ENTRYPOINT_URL.rsplit('?')[0].rsplit('/')[-1]
     else:
         AD_LIST_URL += str(NEIGHBORHOOD)
         AD_LIST_URL += QUERY_PARAMS + 'page='
@@ -247,6 +248,7 @@ async def get_ads_detail(queues, asession):
         data['ad_title'] = res['data']['share']['title']
         data['ad_publish_datetime'] = text2timestamp(res['widgets']['header']['date'])
         data['ad_scrap_timestamp'] = jdatetime.datetime.now().strftime(DATETIME_FORMAT)
+        data['neighborhood'] = NEIGHBORHOOD
 
         ad_owner_type = res['data']['business_data']['business_type']
         data['ad_owner_type'] = ad_owner_type
@@ -557,7 +559,9 @@ try:
 except Exception:
     pass
 
+scraped_timestamp = jdatetime.datetime.now().strftime(DATETIME_FORMAT)
+NEIGHBORHOOD = str(NEIGHBORHOOD)
 # write to csv file
-df.to_csv('data.csv', index=False)
+df.to_csv(f'data_{NEIGHBORHOOD}_{scraped_timestamp}.csv', index=False)
 # write to excel file
-df.to_excel('data.xlsx')
+df.to_excel(f'data_{NEIGHBORHOOD}_{scraped_timestamp}.xlsx')
