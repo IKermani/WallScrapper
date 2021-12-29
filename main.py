@@ -23,7 +23,7 @@ TOTAL_PAGES = None
 
 # Niavaran and District 1 Ads list base URL.
 # different pages can be access via appending desired page number to the end of this string.
-AD_LIST_URL = 'https://api.divar.ir/v8/web-search/tehran/buy-apartment/niavaran?districts=49&non-negotiable=true&page='
+AD_LIST_URL = 'https://api.divar.ir/v8/web-search/tehran/buy-apartment/'
 # Ad detail URL; The base URL which Ad details can be reached.
 # By appending Ad ID (in this API Ad ID is distinguished by keyword "token") to the end of
 # this string the Ad details shall be reached.
@@ -35,7 +35,7 @@ AD_CONTACT_DETAIL_URL = 'https://api.divar.ir/v5/posts/{}/contact'
 COOKIES = {
     'did': '8a0c7c3e-9fed-4ece-8bb9-9e50b3418d0c',
     '_gcl_au': '1.1.606995357.1640380110',
-    'token': 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VyIjoiMDkxOTQ2OTk4MTAiLCJpc3MiOiJhdXRoIiwiaWF0IjoxNjQwNjU0NDU1LCJleHAiOjE2NDE5NTA0NTUsInZlcmlmaWVkX3RpbWUiOjE2NDA2NTQ0NTUsInVzZXItdHlwZSI6InBlcnNvbmFsIiwidXNlci10eXBlLWZhIjoiXHUwNjdlXHUwNjQ2XHUwNjQ0IFx1MDYzNFx1MDYyZVx1MDYzNVx1MDZjYyIsInNpZCI6ImY0YWUxYjdjLTBhZjUtNDllMy1iMmNiLTQ5MGQ0ZmU0N2RjYyJ9.ZDcbI2C4aUU806vi8NJEzGjyN4D44pUlFpSG-MUMt2g',
+    'token': 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VyIjoiMDkxOTQ2OTg2NzYiLCJpc3MiOiJhdXRoIiwiaWF0IjoxNjQwNjc2MjA3LCJleHAiOjE2NDE5NzIyMDcsInZlcmlmaWVkX3RpbWUiOjE2NDA2NzYyMDUsInVzZXItdHlwZSI6InBlcnNvbmFsIiwidXNlci10eXBlLWZhIjoiXHUwNjdlXHUwNjQ2XHUwNjQ0IFx1MDYzNFx1MDYyZVx1MDYzNVx1MDZjYyIsInNpZCI6IjgxNWQxMDVkLTY2NjEtNDM0Yi04ZGVjLTE0ZDM0OTJkYmY2ZSJ9.scxUtin3wVdbQIyVoXeaiodnitHXxiB85uyKaD7TU_s',
 }
 
 # All columns of the DataSet
@@ -69,6 +69,40 @@ list_of_dicts = []
 # values to perform loading animation :)
 MESSAGE = ''
 DONE = False
+
+ENTRYPOINT_URL = None
+NEIGHBORHOOD = None
+QUERY_PARAMS = '?'
+
+
+def load_config(config_filename='config.xlsx'):
+    global NEIGHBORHOOD, ENTRYPOINT_URL, QUERY_PARAMS, AD_LIST_URL
+
+    _df = pd.read_excel(config_filename, na_filter=False)
+    NEIGHBORHOOD = _df[_df['key'] == 'neighborhood'].value.values[0]
+    ENTRYPOINT_URL = _df[_df['key'] == 'entrypoint_url'].value.values[0]
+
+    params = _df[(_df['key'] != 'neighborhood') & (_df['key'] != 'entrypoint_url')].values
+    for param in params:
+        key, value = param
+        QUERY_PARAMS += str(f'{key}={value}&')
+
+    if not ENTRYPOINT_URL and not NEIGHBORHOOD:
+        print(f"please set entrypoint_url or neighborhood values in config.xlsx")
+        exit(1)
+
+    if ENTRYPOINT_URL:
+        ENTRYPOINT_URL = str(ENTRYPOINT_URL)
+        if len(splited := ENTRYPOINT_URL.rsplit('?')) > 1:
+            # got some filter
+            ENTRYPOINT_URL += '&page='
+        else:
+            # no filter is used
+            ENTRYPOINT_URL += '?page='
+        AD_LIST_URL = ENTRYPOINT_URL
+    else:
+        AD_LIST_URL += str(NEIGHBORHOOD)
+        AD_LIST_URL += QUERY_PARAMS + 'page='
 
 
 # elegant way to show the logs of this script
@@ -381,6 +415,7 @@ async def get_ads_list(queues, asession: AsyncHTMLSession = AsyncHTMLSession()):
     handles the process of creating ad list workers and
     handles where is the last page of Ads (to stop the process = while loop).
     """
+
     def _is_last_page(res):
         """
         check if the response is last page or not
@@ -481,6 +516,7 @@ async def get_ads_list(queues, asession: AsyncHTMLSession = AsyncHTMLSession()):
 
 
 async def main():
+    load_config()
     # create some Queues to pass values between workers
     ad_list_jobs_q = Queue()
     ad_list_res_q = Queue()
@@ -501,8 +537,8 @@ async def main():
 
     print_(f'{round(end - start, 2)} seconds elapsed.')
 
-asyncio.run(main(), debug=False)
 
+asyncio.run(main(), debug=False)
 
 print_('saving dataframe to file.')
 # save values to dataframe
