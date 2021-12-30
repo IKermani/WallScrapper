@@ -50,7 +50,7 @@ COLUMNS = [
 ]
 
 # The datetime format to store the datetime values in the dataset
-DATETIME_FORMAT = '%Y/%m/%d %H:%M:%S'
+DATETIME_FORMAT = '%Y/%m/%d_%H:%M:%S'
 
 # values of datetime in divar.ir
 JUST_NOW = 'لحظاتی پیش'
@@ -252,7 +252,7 @@ async def get_ads_detail(queues, asession):
 
         ad_owner_type = res['data']['business_data']['business_type']
         data['ad_owner_type'] = ad_owner_type
-        if ad_owner_type == 'personal':
+        if ad_owner_type == 'personal' or not res['data']['business_data']['data']:
             data['ad_owner_id'] = None
             data['ad_owner_name'] = None
             data['ad_owner_phonenumber'] = None
@@ -546,22 +546,23 @@ print_('saving dataframe to file.')
 # save values to dataframe
 df = pd.DataFrame(list_of_dicts)
 
-try:
-    # if there was a csv file present load it
-    old_df = pd.read_csv('data.csv')
-    # concat two dataframes
-    df = df.append(old_df, ignore_index=True)
-    # drop duplicate 'ad_id's
-    # this means in the presence of old data this script
-    # do not remove old values that are not present now on the website
-    # and only ad new records to the data.csv
-    df.drop_duplicates(subset='ad_id', ignore_index=True, inplace=True)
-except Exception:
-    pass
+# try:
+#     # if there was a csv file present load it
+#     old_df = pd.read_csv('data.csv')
+#     # concat two dataframes
+#     df = df.append(old_df, ignore_index=True)
+#     # drop duplicate 'ad_id's
+#     # this means in the presence of old data this script
+#     # do not remove old values that are not present now on the website
+#     # and only ad new records to the data.csv
+#     df.drop_duplicates(subset='ad_id', ignore_index=True, inplace=True)
+# except Exception:
+#     pass
 
 scraped_timestamp = jdatetime.datetime.now().strftime(DATETIME_FORMAT)
 NEIGHBORHOOD = str(NEIGHBORHOOD)
+fname = f'data_{NEIGHBORHOOD}_{scraped_timestamp}'.replace('/', '_').replace(':', '_')
 # write to csv file
-df.to_csv(f'data_{NEIGHBORHOOD}_{scraped_timestamp}.csv', index=False)
+df.to_csv(fname + '.csv', index=False)
 # write to excel file
-df.to_excel(f'data_{NEIGHBORHOOD}_{scraped_timestamp}.xlsx')
+df.to_excel(fname + '.xlsx', index=False)
